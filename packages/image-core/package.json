@@ -7,6 +7,6 @@
   "scripts": {
     "build": "node -e \"console.log('build image-core')\"",
     "lint": "node -e \"console.log('lint image-core')\"",
-    "test": "node --test test"
+    "test": "node --test test/*.test.mjs"
   }
 }

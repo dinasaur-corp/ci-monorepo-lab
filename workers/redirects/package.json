@@ -7,6 +7,6 @@
   "scripts": {
     "build": "node -e \"console.log('build redirects')\"",
     "lint": "node -e \"console.log('lint redirects')\"",
-    "test": "node --test test"
+    "test": "node --test test/*.test.mjs"
   }
 }

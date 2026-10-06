@@ -7,6 +7,6 @@
   "scripts": {
     "build": "node -e \"console.log('build router')\"",
     "lint": "node -e \"console.log('lint router')\"",
-    "test": "node --test test"
+    "test": "node --test test/*.test.mjs"
   }
 }

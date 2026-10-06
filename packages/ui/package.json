@@ -7,6 +7,6 @@
   "scripts": {
     "build": "node -e \"console.log('build ui')\"",
     "lint": "node -e \"console.log('lint ui')\"",
-    "test": "node --test test"
+    "test": "node --test test/*.test.mjs"
   }
 }

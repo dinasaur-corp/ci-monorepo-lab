@@ -7,6 +7,6 @@
   "scripts": {
     "build": "node -e \"console.log('build config')\"",
     "lint": "node -e \"console.log('lint config')\"",
-    "test": "node --test test"
+    "test": "node --test test/*.test.mjs"
   }
 }

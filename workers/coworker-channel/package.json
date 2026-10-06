@@ -7,6 +7,6 @@
   "scripts": {
     "build": "node -e \"console.log('build coworker-channel')\"",
     "lint": "node -e \"console.log('lint coworker-channel')\"",
-    "test": "node --test test"
+    "test": "node --test test/*.test.mjs"
   }
 }
