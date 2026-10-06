@@ -1,0 +1,79 @@
+name: Runner benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: Runner label
+        type: choice
+        options:
+          - namespace-profile-deenster
+          - depot-ubuntu-24.04-4
+          - ubuntu-latest
+        default: namespace-profile-deenster
+      scenario:
+        description: Scenario label
+        type: string
+        default: manual
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runner-benchmark-${{ inputs.runner }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  full:
+    name: full (${{ inputs.runner }})
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r lint
+      - run: pnpm -r test
+      - run: pnpm -r build
+      - name: Runner details
+        if: always()
+        run: |
+          echo "runner=${{ inputs.runner }} scenario=${{ inputs.scenario }}"
+          nproc
+          free -g | head -2
+          lscpu | grep -E 'Model name|Architecture' || true
+
+  fanout:
+    name: ${{ matrix.unit }} (${{ inputs.runner }})
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        unit:
+          - assets-sync
+          - coworker-channel
+          - image-manager
+          - redirects
+          - router
+          - site
+          - streams
+          - config
+          - shared
+          - image-core
+          - ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter "@lab/${{ matrix.unit }}" lint
+      - run: pnpm --filter "@lab/${{ matrix.unit }}" test
+      - run: pnpm --filter "@lab/${{ matrix.unit }}" build

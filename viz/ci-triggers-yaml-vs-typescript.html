@@ -1,0 +1,337 @@
+<div id="ci-trigger-explorer">
+  <style>
+    #ci-trigger-explorer { display: grid; gap: 16px; }
+    #ci-trigger-explorer .model-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+    #ci-trigger-explorer .stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; align-items: start; }
+    #ci-trigger-explorer .stage { display: grid; gap: 8px; min-width: 0; }
+    #ci-trigger-explorer .stage-head { display: flex; align-items: center; gap: 6px; font-weight: 500; }
+    #ci-trigger-explorer .stage-num { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--muted); color: var(--foreground); font-size: 12px; }
+    #ci-trigger-explorer pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+    #ci-trigger-explorer .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+    #ci-trigger-explorer .chip { padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--viz-series-1) 16%, transparent); color: var(--foreground); font-size: 12px; }
+    #ci-trigger-explorer .chip.more { background: var(--muted); }
+    #ci-trigger-explorer .decision { padding: 2px 8px; border-radius: 6px; font-size: 12px; justify-self: start; }
+    #ci-trigger-explorer .decision.static { background: color-mix(in srgb, var(--orange) 18%, transparent); }
+    #ci-trigger-explorer .decision.code { background: color-mix(in srgb, var(--green) 18%, transparent); }
+    #ci-trigger-explorer .decision.none { background: color-mix(in srgb, var(--red) 16%, transparent); }
+    #ci-trigger-explorer .runs-count { font-size: 28px; line-height: 1; }
+    #ci-trigger-explorer .lanes { display: grid; gap: 0; }
+    #ci-trigger-explorer .lane { display: grid; grid-template-columns: minmax(120px, 150px) minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--border); }
+    #ci-trigger-explorer .lane-head { color: var(--muted-foreground); font-size: 12px; border-top: 0; padding-top: 0; }
+    #ci-trigger-explorer .status { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 6px; font-size: 12px; }
+    #ci-trigger-explorer .status svg { width: 14px; height: 14px; }
+    #ci-trigger-explorer .status.ok { background: color-mix(in srgb, var(--green) 18%, transparent); }
+    #ci-trigger-explorer .status.missed { background: color-mix(in srgb, var(--red) 20%, transparent); }
+    #ci-trigger-explorer .status.waiting { background: color-mix(in srgb, var(--yellow) 24%, transparent); }
+    #ci-trigger-explorer .status.extra { background: color-mix(in srgb, var(--orange) 20%, transparent); }
+    #ci-trigger-explorer .status.skipped { background: var(--muted); }
+    #ci-trigger-explorer .why { color: var(--muted-foreground); font-size: 12px; margin-top: 2px; }
+    #ci-trigger-explorer .pips { display: flex; gap: 4px; }
+    #ci-trigger-explorer .pip { display: grid; place-items: center; min-width: 46px; height: 24px; padding: 0 4px; border-radius: 4px; background: color-mix(in srgb, var(--foreground) 6%, transparent); color: var(--muted-foreground); font-size: 11px; }
+    #ci-trigger-explorer .pip.on { background: color-mix(in srgb, var(--green) 26%, transparent); color: var(--foreground); }
+    #ci-trigger-explorer .pip.manual { background: color-mix(in srgb, var(--yellow) 22%, transparent); color: var(--foreground); }
+    #ci-trigger-explorer .pip.gate { background: color-mix(in srgb, var(--blue) 22%, transparent); color: var(--foreground); }
+    #ci-trigger-explorer .summary { font-weight: 500; }
+    @media (max-width: 620px) {
+      #ci-trigger-explorer .lane { grid-template-columns: 1fr; gap: 6px; }
+      #ci-trigger-explorer .lane-head { display: none; }
+      #ci-trigger-explorer .pip { min-width: 0; flex: 1; }
+    }
+  </style>
+
+  <div class="viz-controls">
+    <div>
+      <span class="form-label">CI model</span>
+      <div class="model-buttons" role="group" aria-label="CI model"></div>
+    </div>
+    <div>
+      <label class="form-label" for="cte-event">Trigger</label>
+      <select class="form-select" id="cte-event">
+        <option value="pr">Pull request opened or updated</option>
+        <option value="push">Merge / push to main</option>
+        <option value="manual">Manual run</option>
+      </select>
+    </div>
+    <div id="cte-change-wrap">
+      <label class="form-label" for="cte-change">What changed</label>
+      <select class="form-select" id="cte-change">
+        <option value="router">workers/router code</option>
+        <option value="shared">packages/shared</option>
+        <option value="image-core" selected>packages/image-core</option>
+        <option value="docs">docs only</option>
+        <option value="lockfile">pnpm-lock.yaml</option>
+        <option value="terraform">infra/terraform</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="summary tabular-nums" aria-live="polite" id="cte-summary"></div>
+
+  <div class="stages">
+    <section class="stage" aria-labelledby="cte-s1">
+      <div class="stage-head" id="cte-s1"><span class="stage-num">1</span>Trigger</div>
+      <div id="cte-trigger"></div>
+    </section>
+    <section class="stage" aria-labelledby="cte-s2">
+      <div class="stage-head" id="cte-s2"><span class="stage-num">2</span>Who decides what runs</div>
+      <span class="decision" id="cte-decision"></span>
+      <pre><code id="cte-code"></code></pre>
+    </section>
+    <section class="stage" aria-labelledby="cte-s3">
+      <div class="stage-head" id="cte-s3"><span class="stage-num">3</span>Runs created</div>
+      <div class="viz-row"><span class="runs-count tabular-nums" id="cte-run-count"></span><span class="text-muted" id="cte-run-label"></span></div>
+      <div class="chips" id="cte-runs"></div>
+    </section>
+  </div>
+
+  <div class="lanes" role="table" aria-label="Result per Worker">
+    <div class="lane lane-head" role="row">
+      <span role="columnheader">Worker</span>
+      <span role="columnheader">Result</span>
+      <span role="columnheader">Environments</span>
+    </div>
+    <div id="cte-lanes" role="rowgroup"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const root = document.getElementById("ci-trigger-explorer");
+  const $ = (id) => document.getElementById(id);
+
+  const models = [
+    { id: "sprawl", label: "YAML · file per Worker" },
+    { id: "consolidated", label: "YAML · one file + filter" },
+    { id: "cfDocs", label: "TypeScript · docs today" },
+    { id: "cfProposed", label: "TypeScript · proposed" },
+  ];
+  const envs = ["dev", "test", "qa", "stage", "preprod", "prod"];
+  const deps = {
+    config: [], shared: ["config"], "image-core": ["shared"], ui: ["config"],
+    router: ["shared", "config"], "image-manager": ["image-core"], redirects: ["shared"],
+    streams: ["config"], "coworker-channel": ["shared", "ui"], site: ["ui", "image-core"], "assets-sync": ["config"],
+  };
+  const workers = ["router", "site", "image-manager", "redirects", "coworker-channel", "streams", "assets-sync"];
+  const yamlPaths = {
+    router: ["router", "config", "shared"], site: ["site", "config", "ui"],
+    "image-manager": ["image-manager", "config", "image-core", "shared"], redirects: ["redirects", "config", "shared"],
+    "coworker-channel": ["coworker-channel", "config", "shared", "ui"], streams: ["streams", "config"], "assets-sync": ["assets-sync", "config"],
+  };
+  const changes = {
+    router: { file: "workers/router/src/handler.js", owner: "router" },
+    shared: { file: "packages/shared/src/index.js", owner: "shared" },
+    "image-core": { file: "packages/image-core/src/index.js", owner: "image-core" },
+    docs: { file: "docs/architecture.md", owner: null },
+    lockfile: { file: "pnpm-lock.yaml", owner: "*" },
+    terraform: { file: "infra/terraform/cloudflare/main.tf", owner: null, infra: true },
+  };
+  const code = {
+    sprawl: `# site-pr.yml (1 of 81)
+on:
+  pull_request:
+    paths:
+      - "workers/site/**"
+      - "packages/ui/**"
+      # missing: image-core`,
+    consolidated: `# workers.yml
+- uses: dorny/paths-filter@v3
+  with:
+    filters: |
+      site: [workers/site/**, packages/ui/**]
+strategy:
+  matrix:
+    worker: \${{ fromJSON(changes) }}`,
+    cfDocs: `// 1 connection per Worker, no path filter
+const source = await step.checkout("checkout");
+// ...install, test, build...
+if (push && branch === "main")
+  return step.deploy("prod", { bundle });
+return step.preview("preview", { bundle });`,
+    cfProposed: `const changes = await step.changes();
+const graph = await step.workspace();
+const affected = graph.workers.affectedBy(changes);
+for (const worker of affected) {
+  await step.approval("prod");
+  await step.deploy("prod", { bundle, worker });
+}`,
+  };
+  const decisions = {
+    sprawl: ["static", "GitHub, before any run · hand-written path lists"],
+    consolidated: ["static", "A filter job inside the run · same hand-written lists"],
+    cfDocs: ["none", "Connection trigger only · every event runs every Worker"],
+    cfProposed: ["code", "Your code inside the run · real dependency graph"],
+  };
+  const icons = { ok: "circle-check", missed: "circle-x", waiting: "clock", extra: "circle-alert", skipped: "circle-minus" };
+
+  let state = { model: "sprawl", event: "pr", change: "image-core" };
+  const saved = window.openai?.widgetState?.privateContent;
+  if (saved && models.some((m) => m.id === saved.model)) state = { ...state, ...saved };
+
+  function pathTo(worker, target, seen = new Set()) {
+    if (worker === target) return [worker];
+    for (const dep of deps[worker]) {
+      if (seen.has(dep)) continue;
+      seen.add(dep);
+      const rest = pathTo(dep, target, seen);
+      if (rest) return [worker, ...rest];
+    }
+    return null;
+  }
+  function affected(change) {
+    const owner = changes[change].owner;
+    if (owner === "*") return Object.fromEntries(workers.map((w) => [w, "lockfile affects every package"]));
+    if (!owner) return {};
+    const out = {};
+    for (const w of workers) {
+      const path = pathTo(w, owner);
+      if (path) out[w] = path.length === 1 ? "own code changed" : `depends on ${owner}${path.length > 2 ? ` via ${path.slice(1, -1).join(" → ")}` : ""}`;
+    }
+    return out;
+  }
+  function yamlMatch(change, worker) {
+    const owner = changes[change].owner;
+    return owner === "*" || (owner && yamlPaths[worker].includes(owner));
+  }
+
+  function compute() {
+    const { model, event, change } = state;
+    const truth = event === "manual" ? { router: "selected for manual run" } : affected(change);
+    const infra = event !== "manual" && changes[change].infra;
+    const rows = [];
+    const runs = [];
+
+    for (const w of workers) {
+      const should = Boolean(truth[w]);
+      const yaml = event === "manual" ? w === "router" : yamlMatch(change, w);
+      let status, label, why, pips = envs.map(() => "");
+      const deployAll = () => envs.map((e) => (e === "preprod" || e === "prod" ? "gate" : "on"));
+
+      if (model === "sprawl" || model === "consolidated") {
+        if (should && yaml) {
+          status = "ok";
+          if (event === "pr") { label = "Tested"; why = truth[w]; }
+          else if (event === "push") {
+            label = model === "sprawl" ? "Deployed dev + test" : "Deployed through prod";
+            why = model === "sprawl" ? "qa → prod are 4 more files you dispatch by hand" : "preprod and prod wait for approval";
+            pips = model === "sprawl" ? envs.map((e) => (e === "dev" || e === "test" ? "on" : "manual")) : deployAll();
+          } else if (model === "sprawl") { label = "Deployed 1 env"; why = "you picked worker-router-deploy-prod.yml"; pips = envs.map((e) => (e === "prod" ? "on" : "")); }
+          else { status = "skipped"; label = "No manual trigger"; why = "add workflow_dispatch + inputs"; }
+        } else if (should) {
+          status = "missed"; label = "Missed"; why = `${truth[w]}, but its YAML paths don't list it`;
+        } else if (event === "pr" && model === "sprawl") {
+          status = "waiting"; label = "Required check waiting"; why = "workflow skipped, so its status never reports";
+        } else {
+          status = "skipped"; label = model === "consolidated" && event === "pr" ? "Skipped · ci-ok passes" : "Not run"; why = "";
+        }
+      } else if (model === "cfDocs") {
+        if (event === "manual" && w !== "router") { status = "skipped"; label = "Not run"; why = ""; }
+        else {
+          status = should ? "ok" : "extra";
+          label = event === "push" ? (should ? "Deployed to prod" : "Extra deploy") : should ? "Previewed" : "Extra run";
+          why = should ? truth[w] : "no changes here, but the connection can't tell";
+          if (event === "push") pips = envs.map((e) => (e === "prod" ? "on" : ""));
+          if (event === "push" && should) why = "one prod target; no dev → prod promotion";
+        }
+      } else {
+        if (should) {
+          status = "ok";
+          label = event === "push" ? "Deployed through prod" : "Tested + preview URL";
+          why = truth[w];
+          if (event === "push") pips = deployAll();
+        } else { status = "skipped"; label = "Skipped · explained"; why = "no changes in it or its dependencies"; }
+      }
+      rows.push({ w, status, label, why, pips });
+    }
+
+    const ran = rows.filter((r) => r.status === "ok" || r.status === "extra").map((r) => r.w);
+    if (model === "sprawl") {
+      if (event === "pr") {
+        ran.forEach((w) => runs.push(`worker / ${w} / pr`));
+        runs.push("repo / lint", "security / codeql");
+        if (change === "lockfile") runs.push("security / dependency review");
+        if (infra) runs.push("infra / terraform / plan");
+      } else if (event === "push") {
+        ran.forEach((w) => runs.push(`${w} / deploy / dev`, `${w} / deploy / test`));
+        ran.forEach(() => runs.push("smoke / dev", "smoke / test"));
+        if (infra) runs.push("terraform / apply / dev", "terraform / apply / test");
+      } else runs.push("worker / router / deploy / prod");
+    } else if (model === "consolidated") {
+      if (event === "manual") {}
+      else {
+        runs.push("workers");
+        if (event === "pr") runs.push("repo");
+        if (infra) runs.push("infra");
+      }
+    } else if (model === "cfDocs") {
+      (event === "manual" ? ["router"] : workers).forEach((w) => runs.push(`connection: ${w}`));
+    } else runs.push("monorepo CI");
+
+    return { rows, runs, truth };
+  }
+
+  function render() {
+    const { rows, runs } = compute();
+    root.querySelectorAll(".model-buttons .btn").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.model === state.model)));
+    $("cte-event").value = state.event;
+    $("cte-change").value = state.change;
+    $("cte-change-wrap").hidden = state.event === "manual";
+
+    const eventLabel = { pr: "pull_request", push: "push → main", manual: "manual run" }[state.event];
+    $("cte-trigger").innerHTML = state.event === "manual"
+      ? `<span class="viz-badge">${eventLabel}</span><div class="why">Deploy router to prod</div>`
+      : `<span class="viz-badge">${eventLabel}</span><div style="margin-top:6px"><code>${changes[state.change].file}</code></div>`;
+
+    const [kind, text] = decisions[state.model];
+    $("cte-decision").className = `decision ${kind}`;
+    $("cte-decision").textContent = text;
+    $("cte-code").textContent = code[state.model];
+
+    $("cte-run-count").textContent = runs.length;
+    $("cte-run-label").textContent = runs.length === 1 ? "run" : "separate runs";
+    const shown = runs.slice(0, 8);
+    $("cte-runs").innerHTML = shown.map((r) => `<span class="chip">${r}</span>`).join("") +
+      (runs.length > shown.length ? `<span class="chip more">+${runs.length - shown.length} more</span>` : "") +
+      (runs.length === 0 ? `<span class="text-muted">Nothing starts</span>` : "");
+
+    $("cte-lanes").innerHTML = rows.map((r) => `
+      <div class="lane" role="row">
+        <span role="cell"><code>${r.w}</code></span>
+        <span role="cell">
+          <span class="status ${r.status}"><i data-lucide="${icons[r.status]}" aria-hidden="true"></i>${r.label}</span>
+          ${r.why ? `<div class="why">${r.why}</div>` : ""}
+        </span>
+        <span role="cell" class="pips" aria-label="Environments">
+          ${envs.map((e, i) => `<span class="pip ${r.pips[i]}" data-tooltip="${e}: ${({ on: "deployed", gate: "deployed after approval", manual: "separate manual workflow", "": "not deployed" })[r.pips[i]]}">${r.pips[i] === "gate" ? "✓ " : ""}${e}</span>`).join("")}
+        </span>
+      </div>`).join("");
+    if (window.lucide) lucide.createIcons({ attrs: { width: 14, height: 14 } });
+
+    const count = (s) => rows.filter((r) => r.status === s).length;
+    const parts = [`${runs.length} ${runs.length === 1 ? "run" : "runs"}`];
+    if (count("missed")) parts.push(`${count("missed")} Worker missed`);
+    if (count("waiting")) parts.push(`${count("waiting")} required checks stuck`);
+    if (count("extra")) parts.push(`${count("extra")} unnecessary Worker runs`);
+    if (!count("missed") && !count("waiting") && !count("extra")) parts.push("exactly the affected Workers");
+    $("cte-summary").textContent = `${models.find((m) => m.id === state.model).label}: ${parts.join(" · ")}`;
+  }
+
+  function save() {
+    window.openai?.setWidgetState?.({ modelContent: { ...state }, privateContent: { ...state } })?.catch?.(() => {});
+  }
+
+  const group = root.querySelector(".model-buttons");
+  group.innerHTML = models.map((m) => `<button type="button" class="btn" data-model="${m.id}" aria-pressed="false">${m.label}</button>`).join("");
+  group.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-model]");
+    if (!b) return;
+    state.model = b.dataset.model; render(); save();
+  });
+  $("cte-event").addEventListener("change", (e) => { state.event = e.target.value; render(); save(); });
+  $("cte-change").addEventListener("change", (e) => { state.change = e.target.value; render(); save(); });
+  window.addEventListener("openai:set_globals", (e) => {
+    const s = e.detail?.globals?.widgetState?.privateContent;
+    if (s && models.some((m) => m.id === s.model)) { state = { ...state, ...s }; render(); }
+  });
+  render();
+})();
+</script>

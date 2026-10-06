@@ -1,0 +1,194 @@
+<div id="ci-beginner">
+  <style>
+    #ci-beginner { display: grid; gap: 18px; }
+    #ci-beginner .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+    #ci-beginner .steps { display: flex; gap: 6px; flex-wrap: wrap; }
+    #ci-beginner .dot { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--muted); color: var(--muted-foreground); font-size: 12px; }
+    #ci-beginner .dot.on { background: var(--primary); color: var(--primary-foreground); }
+    #ci-beginner .dot.done { color: var(--foreground); }
+    #ci-beginner .caption { font-size: 18px; font-weight: 500; }
+    #ci-beginner .row { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 16px; align-items: start; }
+    #ci-beginner .row-label { display: flex; align-items: center; gap: 8px; font-weight: 500; padding-top: 6px; }
+    #ci-beginner .row-label svg { width: 18px; height: 18px; }
+    #ci-beginner .dim { opacity: .28; transition: opacity .25s; }
+    #ci-beginner .files { display: flex; flex-wrap: wrap; gap: 6px; }
+    #ci-beginner .file { padding: 4px 8px; border-radius: 6px; background: color-mix(in srgb, var(--foreground) 6%, transparent); font-family: ui-monospace, monospace; font-size: 12px; }
+    #ci-beginner .file.hot { background: color-mix(in srgb, var(--blue) 28%, transparent); color: var(--foreground); }
+    #ci-beginner .events { display: flex; flex-wrap: wrap; gap: 6px; }
+    #ci-beginner .event { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; background: color-mix(in srgb, var(--foreground) 6%, transparent); font-size: 13px; }
+    #ci-beginner .event svg { width: 15px; height: 15px; }
+    #ci-beginner .event.hot { background: color-mix(in srgb, var(--blue) 28%, transparent); }
+    #ci-beginner .event.cold { opacity: .5; }
+    #ci-beginner .lanes { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    #ci-beginner .lane { display: grid; gap: 10px; align-content: start; }
+    #ci-beginner .lane-title { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+    #ci-beginner .lane-title .tag { font-size: 12px; font-weight: 400; color: var(--muted-foreground); }
+    #ci-beginner .lane-note { font-size: 13px; color: var(--muted-foreground); min-height: 2.6em; }
+    #ci-beginner .rules { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 6px; }
+    #ci-beginner .rule { padding: 6px 8px; border-radius: 8px; background: color-mix(in srgb, var(--foreground) 5%, transparent); font-size: 12px; display: grid; gap: 3px; }
+    #ci-beginner .rule b { font-weight: 500; font-family: ui-monospace, monospace; }
+    #ci-beginner .rule .w { color: var(--muted-foreground); }
+    #ci-beginner .rule .w mark { background: color-mix(in srgb, var(--blue) 30%, transparent); color: var(--foreground); border-radius: 3px; padding: 0 2px; }
+    #ci-beginner .rule.yes { background: color-mix(in srgb, var(--green) 16%, transparent); }
+    #ci-beginner .rule.oops { background: color-mix(in srgb, var(--red) 16%, transparent); }
+    #ci-beginner .brain { padding: 10px; border-radius: 8px; background: color-mix(in srgb, var(--foreground) 5%, transparent); display: grid; gap: 8px; font-size: 13px; }
+    #ci-beginner .brain pre { margin: 0; font-size: 12px; white-space: pre-wrap; }
+    #ci-beginner .tree { display: grid; gap: 3px; font-family: ui-monospace, monospace; font-size: 12px; }
+    #ci-beginner .tree .hit { color: var(--foreground); font-weight: 500; }
+    #ci-beginner .tree .miss { color: var(--muted-foreground); }
+    #ci-beginner .workers { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 6px; }
+    #ci-beginner .worker { display: grid; gap: 2px; padding: 8px; border-radius: 8px; font-size: 12px; background: color-mix(in srgb, var(--foreground) 5%, transparent); }
+    #ci-beginner .worker b { font-weight: 500; font-family: ui-monospace, monospace; }
+    #ci-beginner .worker .s { display: inline-flex; align-items: center; gap: 4px; }
+    #ci-beginner .worker .s svg { width: 13px; height: 13px; }
+    #ci-beginner .worker.ok { background: color-mix(in srgb, var(--green) 20%, transparent); }
+    #ci-beginner .worker.bad { background: color-mix(in srgb, var(--red) 22%, transparent); }
+    #ci-beginner .worker.skip { color: var(--muted-foreground); }
+    #ci-beginner .count { font-size: 12px; color: var(--muted-foreground); }
+    @media (max-width: 620px) { #ci-beginner .row { grid-template-columns: 1fr; gap: 6px; } }
+  </style>
+
+  <div class="bar">
+    <div class="steps" id="cb-steps" aria-label="Steps"></div>
+    <div class="viz-row">
+      <button type="button" class="btn" id="cb-back"><i data-lucide="arrow-left" aria-hidden="true"></i>Back</button>
+      <button type="button" class="btn btn-primary" id="cb-next">Next<i data-lucide="arrow-right" aria-hidden="true"></i></button>
+    </div>
+  </div>
+
+  <div class="caption" id="cb-caption" aria-live="polite"></div>
+
+  <div class="row" id="cb-r1">
+    <div class="row-label"><i data-lucide="file-pen" aria-hidden="true"></i>1 · You change code</div>
+    <div class="files" id="cb-files"></div>
+  </div>
+
+  <div class="row" id="cb-r2">
+    <div class="row-label"><i data-lucide="bell-ring" aria-hidden="true"></i>2 · An event starts CI</div>
+    <div class="events">
+      <span class="event hot"><i data-lucide="git-pull-request" aria-hidden="true"></i>Pull request opened</span>
+      <span class="event cold"><i data-lucide="git-merge" aria-hidden="true"></i>Merge to main</span>
+      <span class="event cold"><i data-lucide="mouse-pointer-click" aria-hidden="true"></i>Someone clicks “Run”</span>
+      <span class="event cold"><i data-lucide="alarm-clock" aria-hidden="true"></i>Every night at 2am</span>
+    </div>
+  </div>
+
+  <div class="row" id="cb-r3">
+    <div class="row-label"><i data-lucide="split" aria-hidden="true"></i>3 · Decide what to check</div>
+    <div class="lanes">
+      <div class="lane">
+        <div class="lane-title"><i data-lucide="files" aria-hidden="true"></i>YAML way <span class="tag">one file per Worker</span></div>
+        <div class="lane-note" id="cb-yaml-note"></div>
+        <div class="rules" id="cb-rules"></div>
+      </div>
+      <div class="lane">
+        <div class="lane-title"><i data-lucide="file-code" aria-hidden="true"></i>TypeScript way <span class="tag">one program</span></div>
+        <div class="lane-note" id="cb-ts-note"></div>
+        <div class="brain">
+          <pre><code>changed = getChangedFiles()
+for each Worker:
+  if Worker uses changed code → check it</code></pre>
+          <div class="tree" id="cb-tree"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" id="cb-r4">
+    <div class="row-label"><i data-lucide="flask-conical" aria-hidden="true"></i>4 · Test + deploy</div>
+    <div class="lanes">
+      <div class="lane">
+        <div class="count" id="cb-yaml-count"></div>
+        <div class="workers" id="cb-yaml-workers"></div>
+      </div>
+      <div class="lane">
+        <div class="count" id="cb-ts-count"></div>
+        <div class="workers" id="cb-ts-workers"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const root = document.getElementById("ci-beginner");
+  const $ = (id) => document.getElementById(id);
+  const workers = ["router", "site", "image-manager", "redirects", "coworker-channel", "streams", "assets-sync"];
+  const uses = {
+    router: ["shared"], site: ["ui", "image-core"], "image-manager": ["image-core"], redirects: ["shared"],
+    "coworker-channel": ["shared", "ui"], streams: ["config"], "assets-sync": ["config"], "image-core": ["shared"], ui: ["config"], shared: ["config"], config: [],
+  };
+  const watches = {
+    router: ["router", "shared"], site: ["site", "ui"], "image-manager": ["image-manager", "image-core", "shared"],
+    redirects: ["redirects", "shared"], "coworker-channel": ["coworker-channel", "shared", "ui"], streams: ["streams", "config"], "assets-sync": ["assets-sync", "config"],
+  };
+  const files = ["workers/router", "workers/site", "workers/image-manager", "workers/redirects", "workers/coworker-channel", "workers/streams", "workers/assets-sync", "packages/shared", "packages/image-core", "packages/ui", "packages/config"];
+  const captions = [
+    () => "You edit packages/shared — code that several Workers use.",
+    () => "Opening a pull request is an event. Events are the things that start CI.",
+    () => "CI now has to decide: which Workers could this change break?",
+    () => "YAML forgot site. Its code changed, but it was never tested.",
+  ];
+  let step = 0;
+  const change = "shared";
+  const saved = window.openai?.widgetState?.privateContent;
+  if (saved) step = saved.step ?? 0;
+
+  const label = (c) => (c === "router" ? "workers/router" : `packages/${c}`);
+  const chain = (w, target, path = [w]) => {
+    if (w === target) return path;
+    for (const d of uses[w] || []) { const p = chain(d, target, [...path, d]); if (p) return p; }
+    return null;
+  };
+  const truth = (c) => workers.filter((w) => chain(w, c));
+  const yamlPicks = (c) => workers.filter((w) => watches[w].includes(c));
+  const yamlMissed = (c) => truth(c).filter((w) => !yamlPicks(c).includes(w));
+
+  function workerTile(w, status, note) {
+    const icon = { ok: "circle-check", bad: "triangle-alert", skip: "circle-minus" }[status];
+    const text = { ok: "tested ✓ deployed", bad: "NOT tested", skip: "skipped" }[status];
+    return `<div class="worker ${status}"><b>${w}</b><span class="s"><i data-lucide="${icon}" aria-hidden="true"></i>${text}</span>${note ? `<span>${note}</span>` : ""}</div>`;
+  }
+
+  function render() {
+    const picks = yamlPicks(change), real = truth(change), missed = yamlMissed(change);
+    $("cb-steps").innerHTML = ["Change", "Event", "Decide", "Result"].map((s, i) =>
+      `<span class="dot ${i === step ? "on" : i < step ? "done" : ""}">${i + 1} ${s}</span>`).join("");
+    $("cb-caption").textContent = captions[step](change);
+    $("cb-back").disabled = step === 0;
+    $("cb-next").disabled = step === 3;
+    ["cb-r1", "cb-r2", "cb-r3", "cb-r4"].forEach((id, i) => $(id).classList.toggle("dim", i > step));
+
+    $("cb-files").innerHTML = files.map((f) => `<span class="file ${f === label(change) ? "hot" : ""}">${f}</span>`).join("");
+
+    const reveal = step >= 2;
+    $("cb-yaml-note").textContent = reveal ? `Each Worker's file lists folders to watch. Someone has to keep these lists up to date by hand.` : "";
+    $("cb-rules").innerHTML = workers.map((w) => {
+      const hit = watches[w].includes(change);
+      const oops = reveal && missed.includes(w);
+      const cls = !reveal ? "" : hit ? "yes" : oops ? "oops" : "";
+      const list = watches[w].map((x) => (reveal && x === change ? `<mark>${x}</mark>` : x)).join(", ");
+      return `<div class="rule ${cls}"><b>${w}.yml</b><span class="w">watches: ${list}</span>${reveal ? `<span>${hit ? "✓ match → run" : oops ? `✗ no match, but site uses ${change} via image-core` : "– no match"}</span>` : ""}</div>`;
+    }).join("");
+
+    $("cb-ts-note").textContent = reveal ? "It reads the real “who uses what” map from your code, so it can't go out of date." : "";
+    $("cb-tree").innerHTML = reveal ? workers.map((w) => {
+      const p = chain(w, change);
+      return p ? `<span class="hit">✓ ${p.join(" → ")}</span>` : `<span class="miss">– ${w} doesn't use ${change}</span>`;
+    }).join("") : "";
+
+    const done = step >= 3;
+    $("cb-yaml-count").textContent = done ? `YAML: ${picks.length} of ${real.length} affected Workers tested · ${workers.length} files to maintain` : "";
+    $("cb-ts-count").textContent = done ? `TypeScript: ${real.length} of ${real.length} tested · 1 file to maintain` : "";
+    $("cb-yaml-workers").innerHTML = done ? workers.map((w) =>
+      picks.includes(w) ? workerTile(w, "ok") : missed.includes(w) ? workerTile(w, "bad", "bug can reach users") : workerTile(w, "skip")).join("") : "";
+    $("cb-ts-workers").innerHTML = done ? workers.map((w) => workerTile(w, real.includes(w) ? "ok" : "skip")).join("") : "";
+
+    if (window.lucide) lucide.createIcons({ attrs: { width: 16, height: 16 } });
+  }
+  const save = () => window.openai?.setWidgetState?.({ modelContent: { step: step + 1, change }, privateContent: { step, change } })?.catch?.(() => {});
+  $("cb-next").addEventListener("click", () => { step = Math.min(3, step + 1); render(); save(); });
+  $("cb-back").addEventListener("click", () => { step = Math.max(0, step - 1); render(); save(); });
+  render();
+})();
+</script>
