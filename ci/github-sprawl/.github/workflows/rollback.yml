@@ -1,0 +1,18 @@
+name: "ops / rollback worker"
+
+on:
+  workflow_dispatch:
+    inputs:
+      worker:
+        type: choice
+        options: [assets-sync, coworker-channel, image-manager, redirects, router, site, streams]
+      environment:
+        type: choice
+        options: [dev, test, qa, stage, preprod, prod]
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - run: pnpm dlx wrangler rollback --name ikea-${{ inputs.worker }}-${{ inputs.environment }}

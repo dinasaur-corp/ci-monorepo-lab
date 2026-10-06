@@ -1,0 +1,30 @@
+name: "worker / router / deploy / prod"
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to promote
+        required: true
+        default: main
+
+concurrency:
+  group: router-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, azure-vnet, large]
+    environment: prod  # required reviewers configured in GitHub
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm --filter @lab/router build
+      - run: pnpm --filter @lab/router exec wrangler deploy --env prod
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN_PROD }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}

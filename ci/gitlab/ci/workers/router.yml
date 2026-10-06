@@ -1,0 +1,80 @@
+.router-changes: &router-changes
+  changes:
+    paths:
+      - "workers/router/**"
+      - "packages/config/**"
+      - "packages/shared/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+
+verify:router:
+  extends: .verify-worker
+  variables: { WORKER: router }
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      <<: *router-changes
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *router-changes
+
+deploy:router:dev:
+  extends: .deploy-worker
+  stage: dev
+  environment: dev
+  variables: { WORKER: router }
+  needs: ["verify:router"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *router-changes
+
+deploy:router:test:
+  extends: .deploy-worker
+  stage: test
+  environment: test
+  variables: { WORKER: router }
+  needs: ["deploy:router:dev"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *router-changes
+
+deploy:router:qa:
+  extends: .deploy-worker
+  stage: qa
+  environment: qa
+  variables: { WORKER: router }
+  needs: ["deploy:router:test"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *router-changes
+
+deploy:router:stage:
+  extends: .deploy-worker
+  stage: stage
+  environment: stage
+  variables: { WORKER: router }
+  needs: ["deploy:router:qa"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *router-changes
+
+deploy:router:preprod:
+  extends: .deploy-worker
+  stage: preprod
+  environment: preprod
+  variables: { WORKER: router }
+  needs: ["deploy:router:stage"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *router-changes
+      when: manual
+
+deploy:router:prod:
+  extends: .deploy-worker
+  stage: prod
+  environment: prod
+  variables: { WORKER: router }
+  needs: ["deploy:router:preprod"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *router-changes
+      when: manual

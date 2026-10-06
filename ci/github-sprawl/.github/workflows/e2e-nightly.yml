@@ -1,0 +1,13 @@
+name: "e2e / nightly"
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+
+jobs:
+  e2e:
+    runs-on: [self-hosted, azure-vnet, large]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm playwright test

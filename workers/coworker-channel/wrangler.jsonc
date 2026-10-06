@@ -1,0 +1,13 @@
+{
+  "name": "ikea-coworker-channel",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "env": {
+    "dev": { "name": "ikea-coworker-channel-dev" },
+    "test": { "name": "ikea-coworker-channel-test" },
+    "qa": { "name": "ikea-coworker-channel-qa" },
+    "stage": { "name": "ikea-coworker-channel-stage" },
+    "preprod": { "name": "ikea-coworker-channel-preprod" },
+    "prod": { "name": "ikea-coworker-channel-prod" }
+  }
+}

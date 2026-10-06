@@ -1,0 +1,37 @@
+name: "worker / coworker-channel / deploy / test"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "workers/coworker-channel/**"
+      - "packages/config/**"
+      - "packages/shared/**"
+      - "packages/ui/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - ".github/workflows/worker-coworker-channel-deploy-test.yml"
+      - ".github/actions/setup/**"
+  workflow_dispatch:
+
+concurrency:
+  group: coworker-channel-test
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, azure-vnet, large]
+    environment: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm --filter @lab/coworker-channel build
+      - run: pnpm --filter @lab/coworker-channel exec wrangler deploy --env test
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN_TEST }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}

@@ -1,0 +1,11 @@
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+stages: [verify, dev, test, qa, stage, preprod, prod]
+
+include:
+  - local: ci/templates.yml
+  - local: ci/workers/*.yml
+  - local: ci/infra.yml

@@ -1,0 +1,16 @@
+name: Monorepo benchmark - GitHub
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: monorepo-github-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    uses: ./.github/workflows/monorepo-benchmark.yml
+    with:
+      runner_label: ubuntu-latest
+      provider: github-actions
+

@@ -1,0 +1,81 @@
+.image-manager-changes: &image-manager-changes
+  changes:
+    paths:
+      - "workers/image-manager/**"
+      - "packages/config/**"
+      - "packages/image-core/**"
+      - "packages/shared/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+
+verify:image-manager:
+  extends: .verify-worker
+  variables: { WORKER: image-manager }
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      <<: *image-manager-changes
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *image-manager-changes
+
+deploy:image-manager:dev:
+  extends: .deploy-worker
+  stage: dev
+  environment: dev
+  variables: { WORKER: image-manager }
+  needs: ["verify:image-manager"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *image-manager-changes
+
+deploy:image-manager:test:
+  extends: .deploy-worker
+  stage: test
+  environment: test
+  variables: { WORKER: image-manager }
+  needs: ["deploy:image-manager:dev"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *image-manager-changes
+
+deploy:image-manager:qa:
+  extends: .deploy-worker
+  stage: qa
+  environment: qa
+  variables: { WORKER: image-manager }
+  needs: ["deploy:image-manager:test"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *image-manager-changes
+
+deploy:image-manager:stage:
+  extends: .deploy-worker
+  stage: stage
+  environment: stage
+  variables: { WORKER: image-manager }
+  needs: ["deploy:image-manager:qa"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *image-manager-changes
+
+deploy:image-manager:preprod:
+  extends: .deploy-worker
+  stage: preprod
+  environment: preprod
+  variables: { WORKER: image-manager }
+  needs: ["deploy:image-manager:stage"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *image-manager-changes
+      when: manual
+
+deploy:image-manager:prod:
+  extends: .deploy-worker
+  stage: prod
+  environment: prod
+  variables: { WORKER: image-manager }
+  needs: ["deploy:image-manager:preprod"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *image-manager-changes
+      when: manual

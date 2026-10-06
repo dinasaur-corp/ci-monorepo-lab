@@ -1,0 +1,31 @@
+name: "worker / site / pr"
+
+on:
+  pull_request:
+    paths:
+      - "workers/site/**"
+      - "packages/config/**"
+      - "packages/ui/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - ".github/workflows/worker-site-pr.yml"
+      - ".github/actions/setup/**"
+
+concurrency:
+  group: site-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  verify:
+    runs-on: [self-hosted, azure-vnet, large]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm --filter @lab/site lint
+      - run: pnpm --filter @lab/site test
+      - run: pnpm --filter @lab/site exec wrangler deploy --dry-run --env test

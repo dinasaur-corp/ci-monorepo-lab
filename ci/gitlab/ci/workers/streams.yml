@@ -1,0 +1,79 @@
+.streams-changes: &streams-changes
+  changes:
+    paths:
+      - "workers/streams/**"
+      - "packages/config/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+
+verify:streams:
+  extends: .verify-worker
+  variables: { WORKER: streams }
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      <<: *streams-changes
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *streams-changes
+
+deploy:streams:dev:
+  extends: .deploy-worker
+  stage: dev
+  environment: dev
+  variables: { WORKER: streams }
+  needs: ["verify:streams"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *streams-changes
+
+deploy:streams:test:
+  extends: .deploy-worker
+  stage: test
+  environment: test
+  variables: { WORKER: streams }
+  needs: ["deploy:streams:dev"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *streams-changes
+
+deploy:streams:qa:
+  extends: .deploy-worker
+  stage: qa
+  environment: qa
+  variables: { WORKER: streams }
+  needs: ["deploy:streams:test"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *streams-changes
+
+deploy:streams:stage:
+  extends: .deploy-worker
+  stage: stage
+  environment: stage
+  variables: { WORKER: streams }
+  needs: ["deploy:streams:qa"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *streams-changes
+
+deploy:streams:preprod:
+  extends: .deploy-worker
+  stage: preprod
+  environment: preprod
+  variables: { WORKER: streams }
+  needs: ["deploy:streams:stage"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *streams-changes
+      when: manual
+
+deploy:streams:prod:
+  extends: .deploy-worker
+  stage: prod
+  environment: prod
+  variables: { WORKER: streams }
+  needs: ["deploy:streams:preprod"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *streams-changes
+      when: manual

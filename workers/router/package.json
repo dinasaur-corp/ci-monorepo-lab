@@ -1,0 +1,12 @@
+{
+  "name": "@lab/router",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "dependencies": { "@lab/shared": "workspace:*", "@lab/config": "workspace:*" },
+  "scripts": {
+    "build": "node -e \"console.log('build router')\"",
+    "lint": "node -e \"console.log('lint router')\"",
+    "test": "node --test test"
+  }
+}

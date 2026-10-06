@@ -1,0 +1,13 @@
+{
+  "name": "ikea-image-manager",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "env": {
+    "dev": { "name": "ikea-image-manager-dev" },
+    "test": { "name": "ikea-image-manager-test" },
+    "qa": { "name": "ikea-image-manager-qa" },
+    "stage": { "name": "ikea-image-manager-stage" },
+    "preprod": { "name": "ikea-image-manager-preprod" },
+    "prod": { "name": "ikea-image-manager-prod" }
+  }
+}

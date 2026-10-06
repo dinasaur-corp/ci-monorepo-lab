@@ -1,0 +1,80 @@
+.redirects-changes: &redirects-changes
+  changes:
+    paths:
+      - "workers/redirects/**"
+      - "packages/config/**"
+      - "packages/shared/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+
+verify:redirects:
+  extends: .verify-worker
+  variables: { WORKER: redirects }
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      <<: *redirects-changes
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *redirects-changes
+
+deploy:redirects:dev:
+  extends: .deploy-worker
+  stage: dev
+  environment: dev
+  variables: { WORKER: redirects }
+  needs: ["verify:redirects"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *redirects-changes
+
+deploy:redirects:test:
+  extends: .deploy-worker
+  stage: test
+  environment: test
+  variables: { WORKER: redirects }
+  needs: ["deploy:redirects:dev"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *redirects-changes
+
+deploy:redirects:qa:
+  extends: .deploy-worker
+  stage: qa
+  environment: qa
+  variables: { WORKER: redirects }
+  needs: ["deploy:redirects:test"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *redirects-changes
+
+deploy:redirects:stage:
+  extends: .deploy-worker
+  stage: stage
+  environment: stage
+  variables: { WORKER: redirects }
+  needs: ["deploy:redirects:qa"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *redirects-changes
+
+deploy:redirects:preprod:
+  extends: .deploy-worker
+  stage: preprod
+  environment: preprod
+  variables: { WORKER: redirects }
+  needs: ["deploy:redirects:stage"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *redirects-changes
+      when: manual
+
+deploy:redirects:prod:
+  extends: .deploy-worker
+  stage: prod
+  environment: prod
+  variables: { WORKER: redirects }
+  needs: ["deploy:redirects:preprod"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *redirects-changes
+      when: manual

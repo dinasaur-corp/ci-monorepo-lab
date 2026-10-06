@@ -1,0 +1,11 @@
+{
+  "name": "ci-monorepo-lab",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.18.0",
+  "scripts": {
+    "generate": "node lab/generate-github-sprawl.mjs",
+    "simulate": "node lab/simulate.mjs",
+    "test": "node --test workers/*/test/*.test.mjs packages/*/test/*.test.mjs"
+  }
+}

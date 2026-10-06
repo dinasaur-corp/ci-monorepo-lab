@@ -1,0 +1,13 @@
+name: "smoke / preprod"
+
+on:
+  workflow_run:
+    workflows: ["worker / assets-sync / deploy / preprod", "worker / coworker-channel / deploy / preprod", "worker / image-manager / deploy / preprod", "worker / redirects / deploy / preprod", "worker / router / deploy / preprod", "worker / site / deploy / preprod", "worker / streams / deploy / preprod"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl --fail https://preprod.ikea.example/en/

@@ -1,0 +1,13 @@
+{
+  "name": "ikea-router",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "env": {
+    "dev": { "name": "ikea-router-dev" },
+    "test": { "name": "ikea-router-test" },
+    "qa": { "name": "ikea-router-qa" },
+    "stage": { "name": "ikea-router-stage" },
+    "preprod": { "name": "ikea-router-preprod" },
+    "prod": { "name": "ikea-router-prod" }
+  }
+}

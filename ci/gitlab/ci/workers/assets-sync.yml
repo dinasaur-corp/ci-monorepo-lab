@@ -1,0 +1,79 @@
+.assets-sync-changes: &assets-sync-changes
+  changes:
+    paths:
+      - "workers/assets-sync/**"
+      - "packages/config/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+
+verify:assets-sync:
+  extends: .verify-worker
+  variables: { WORKER: assets-sync }
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      <<: *assets-sync-changes
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *assets-sync-changes
+
+deploy:assets-sync:dev:
+  extends: .deploy-worker
+  stage: dev
+  environment: dev
+  variables: { WORKER: assets-sync }
+  needs: ["verify:assets-sync"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *assets-sync-changes
+
+deploy:assets-sync:test:
+  extends: .deploy-worker
+  stage: test
+  environment: test
+  variables: { WORKER: assets-sync }
+  needs: ["deploy:assets-sync:dev"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *assets-sync-changes
+
+deploy:assets-sync:qa:
+  extends: .deploy-worker
+  stage: qa
+  environment: qa
+  variables: { WORKER: assets-sync }
+  needs: ["deploy:assets-sync:test"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *assets-sync-changes
+
+deploy:assets-sync:stage:
+  extends: .deploy-worker
+  stage: stage
+  environment: stage
+  variables: { WORKER: assets-sync }
+  needs: ["deploy:assets-sync:qa"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *assets-sync-changes
+
+deploy:assets-sync:preprod:
+  extends: .deploy-worker
+  stage: preprod
+  environment: preprod
+  variables: { WORKER: assets-sync }
+  needs: ["deploy:assets-sync:stage"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *assets-sync-changes
+      when: manual
+
+deploy:assets-sync:prod:
+  extends: .deploy-worker
+  stage: prod
+  environment: prod
+  variables: { WORKER: assets-sync }
+  needs: ["deploy:assets-sync:preprod"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *assets-sync-changes
+      when: manual

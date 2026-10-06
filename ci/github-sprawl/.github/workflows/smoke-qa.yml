@@ -1,0 +1,13 @@
+name: "smoke / qa"
+
+on:
+  workflow_run:
+    workflows: ["worker / assets-sync / deploy / qa", "worker / coworker-channel / deploy / qa", "worker / image-manager / deploy / qa", "worker / redirects / deploy / qa", "worker / router / deploy / qa", "worker / site / deploy / qa", "worker / streams / deploy / qa"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl --fail https://qa.ikea.example/en/

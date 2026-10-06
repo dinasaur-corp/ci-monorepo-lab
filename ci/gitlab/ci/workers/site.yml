@@ -1,0 +1,80 @@
+.site-changes: &site-changes
+  changes:
+    paths:
+      - "workers/site/**"
+      - "packages/config/**"
+      - "packages/ui/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+
+verify:site:
+  extends: .verify-worker
+  variables: { WORKER: site }
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      <<: *site-changes
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *site-changes
+
+deploy:site:dev:
+  extends: .deploy-worker
+  stage: dev
+  environment: dev
+  variables: { WORKER: site }
+  needs: ["verify:site"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *site-changes
+
+deploy:site:test:
+  extends: .deploy-worker
+  stage: test
+  environment: test
+  variables: { WORKER: site }
+  needs: ["deploy:site:dev"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *site-changes
+
+deploy:site:qa:
+  extends: .deploy-worker
+  stage: qa
+  environment: qa
+  variables: { WORKER: site }
+  needs: ["deploy:site:test"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *site-changes
+
+deploy:site:stage:
+  extends: .deploy-worker
+  stage: stage
+  environment: stage
+  variables: { WORKER: site }
+  needs: ["deploy:site:qa"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *site-changes
+
+deploy:site:preprod:
+  extends: .deploy-worker
+  stage: preprod
+  environment: preprod
+  variables: { WORKER: site }
+  needs: ["deploy:site:stage"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *site-changes
+      when: manual
+
+deploy:site:prod:
+  extends: .deploy-worker
+  stage: prod
+  environment: prod
+  variables: { WORKER: site }
+  needs: ["deploy:site:preprod"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      <<: *site-changes
+      when: manual

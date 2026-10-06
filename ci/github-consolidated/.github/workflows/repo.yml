@@ -1,0 +1,38 @@
+name: repo
+
+on:
+  pull_request:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      task:
+        type: choice
+        options: [e2e, rollback, prune-cache]
+
+jobs:
+  lint:
+    if: github.event_name == 'pull_request'
+    runs-on: [self-hosted, azure-vnet, large]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm -r lint
+  codeql:
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v3
+  e2e:
+    if: github.event_name == 'schedule' || inputs.task == 'e2e'
+    runs-on: [self-hosted, azure-vnet, large]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm playwright test

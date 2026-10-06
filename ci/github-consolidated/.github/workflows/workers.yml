@@ -1,0 +1,219 @@
+name: workers
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: workers-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      workers: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            assets-sync:
+              - "workers/assets-sync/**"
+              - "packages/config/**"
+              - "pnpm-lock.yaml"
+              - "pnpm-workspace.yaml"
+              - "package.json"
+            coworker-channel:
+              - "workers/coworker-channel/**"
+              - "packages/config/**"
+              - "packages/shared/**"
+              - "packages/ui/**"
+              - "pnpm-lock.yaml"
+              - "pnpm-workspace.yaml"
+              - "package.json"
+            image-manager:
+              - "workers/image-manager/**"
+              - "packages/config/**"
+              - "packages/image-core/**"
+              - "packages/shared/**"
+              - "pnpm-lock.yaml"
+              - "pnpm-workspace.yaml"
+              - "package.json"
+            redirects:
+              - "workers/redirects/**"
+              - "packages/config/**"
+              - "packages/shared/**"
+              - "pnpm-lock.yaml"
+              - "pnpm-workspace.yaml"
+              - "package.json"
+            router:
+              - "workers/router/**"
+              - "packages/config/**"
+              - "packages/shared/**"
+              - "pnpm-lock.yaml"
+              - "pnpm-workspace.yaml"
+              - "package.json"
+            site:
+              - "workers/site/**"
+              - "packages/config/**"
+              - "packages/ui/**"
+              - "pnpm-lock.yaml"
+              - "pnpm-workspace.yaml"
+              - "package.json"
+            streams:
+              - "workers/streams/**"
+              - "packages/config/**"
+              - "pnpm-lock.yaml"
+              - "pnpm-workspace.yaml"
+              - "package.json"
+
+  verify:
+    needs: changes
+    if: needs.changes.outputs.workers != '[]'
+    runs-on: [self-hosted, azure-vnet, large]
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: ${{ fromJSON(needs.changes.outputs.workers) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm --filter "@lab/${{ matrix.worker }}" lint
+      - run: pnpm --filter "@lab/${{ matrix.worker }}" test
+      - run: pnpm --filter "@lab/${{ matrix.worker }}" exec wrangler deploy --dry-run --env test
+
+  deploy-dev:
+    needs: [changes, verify]
+    if: github.event_name == 'push' && needs.changes.outputs.workers != '[]'
+    runs-on: [self-hosted, azure-vnet, large]
+    environment: dev
+    concurrency:
+      group: ${{ matrix.worker }}-dev
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: ${{ fromJSON(needs.changes.outputs.workers) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm --filter "@lab/${{ matrix.worker }}" build
+      - run: pnpm --filter "@lab/${{ matrix.worker }}" exec wrangler deploy --env dev
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+
+  deploy-test:
+    needs: [changes, deploy-dev]
+    if: github.event_name == 'push' && needs.changes.outputs.workers != '[]'
+    runs-on: [self-hosted, azure-vnet, large]
+    environment: test
+    concurrency:
+      group: ${{ matrix.worker }}-test
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: ${{ fromJSON(needs.changes.outputs.workers) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm --filter "@lab/${{ matrix.worker }}" build
+      - run: pnpm --filter "@lab/${{ matrix.worker }}" exec wrangler deploy --env test
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+
+  deploy-qa:
+    needs: [changes, deploy-test]
+    if: github.event_name == 'push' && needs.changes.outputs.workers != '[]'
+    runs-on: [self-hosted, azure-vnet, large]
+    environment: qa
+    concurrency:
+      group: ${{ matrix.worker }}-qa
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: ${{ fromJSON(needs.changes.outputs.workers) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm --filter "@lab/${{ matrix.worker }}" build
+      - run: pnpm --filter "@lab/${{ matrix.worker }}" exec wrangler deploy --env qa
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+
+  deploy-stage:
+    needs: [changes, deploy-qa]
+    if: github.event_name == 'push' && needs.changes.outputs.workers != '[]'
+    runs-on: [self-hosted, azure-vnet, large]
+    environment: stage
+    concurrency:
+      group: ${{ matrix.worker }}-stage
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: ${{ fromJSON(needs.changes.outputs.workers) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm --filter "@lab/${{ matrix.worker }}" build
+      - run: pnpm --filter "@lab/${{ matrix.worker }}" exec wrangler deploy --env stage
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+
+  deploy-preprod:
+    needs: [changes, deploy-stage]
+    if: github.event_name == 'push' && needs.changes.outputs.workers != '[]'
+    runs-on: [self-hosted, azure-vnet, large]
+    environment: preprod
+    concurrency:
+      group: ${{ matrix.worker }}-preprod
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: ${{ fromJSON(needs.changes.outputs.workers) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm --filter "@lab/${{ matrix.worker }}" build
+      - run: pnpm --filter "@lab/${{ matrix.worker }}" exec wrangler deploy --env preprod
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+
+  deploy-prod:
+    needs: [changes, deploy-preprod]
+    if: github.event_name == 'push' && needs.changes.outputs.workers != '[]'
+    runs-on: [self-hosted, azure-vnet, large]
+    environment: prod
+    concurrency:
+      group: ${{ matrix.worker }}-prod
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: ${{ fromJSON(needs.changes.outputs.workers) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm --filter "@lab/${{ matrix.worker }}" build
+      - run: pnpm --filter "@lab/${{ matrix.worker }}" exec wrangler deploy --env prod
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+
+  ci-ok:
+    if: always()
+    needs: [changes, verify]
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          test "${{ needs.changes.result }}" = "success"
+          test "${{ needs.verify.result }}" = "success" -o "${{ needs.verify.result }}" = "skipped"

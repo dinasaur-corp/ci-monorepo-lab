@@ -1,0 +1,69 @@
+name: Reusable monorepo benchmark
+
+on:
+  workflow_call:
+    inputs:
+      runner_label:
+        description: Runner label used by every benchmark job
+        required: true
+        type: string
+      provider:
+        description: Provider name written into benchmark results
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ${{ inputs.runner_label }}
+    env:
+      BENCH_RUNNER_LABEL: ${{ inputs.runner_label }}
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: plan
+        run: node lab/ci-plan.mjs
+
+  simulation:
+    runs-on: ${{ inputs.runner_label }}
+    env:
+      BENCH_RUNNER_LABEL: ${{ inputs.runner_label }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run generate
+      - run: npm run simulate
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.provider }}-simulation
+          path: lab/results.md
+
+  workspace-checks:
+    needs: plan
+    name: ${{ matrix.kind }} ${{ matrix.name }}
+    runs-on: ${{ inputs.runner_label }}
+    env:
+      BENCH_RUNNER_LABEL: ${{ inputs.runner_label }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node lab/run-workspace-benchmark.mjs "${{ matrix.path }}" "${{ inputs.provider }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ inputs.provider }}-${{ matrix.kind }}-${{ strategy.job-index }}
+          path: lab/benchmark-results/*.json
+

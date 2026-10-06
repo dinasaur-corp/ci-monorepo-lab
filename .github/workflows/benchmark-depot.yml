@@ -1,0 +1,16 @@
+name: Monorepo benchmark - Depot
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: monorepo-depot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    uses: ./.github/workflows/monorepo-benchmark.yml
+    with:
+      runner_label: depot-ubuntu-24.04-4
+      provider: depot-github-runner
+

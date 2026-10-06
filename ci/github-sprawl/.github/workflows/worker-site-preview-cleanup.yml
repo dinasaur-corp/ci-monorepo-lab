@@ -1,0 +1,13 @@
+name: "worker / site / preview cleanup"
+
+on:
+  pull_request:
+    types: [closed]
+    paths:
+      - "workers/site/**"
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Delete preview alias site-pr-${{ github.event.pull_request.number }}"

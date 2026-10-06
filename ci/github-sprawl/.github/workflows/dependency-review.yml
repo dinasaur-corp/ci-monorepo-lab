@@ -1,0 +1,14 @@
+name: "security / dependency review"
+
+on:
+  pull_request:
+    paths:
+      - "pnpm-lock.yaml"
+      - "**/package.json"
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4

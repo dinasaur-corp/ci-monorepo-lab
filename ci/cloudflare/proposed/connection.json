@@ -1,0 +1,17 @@
+{
+  "name": "ikea-monorepo",
+  "repository": { "provider": "github", "name": "inter-ikea/ikea-com-monorepo" },
+  "workflow_id": "workflow_monorepo_ci",
+  "subscriptions": [
+    { "event": "push", "branches": ["main"] },
+    { "event": "pull_request", "actions": ["opened", "reopened", "synchronize", "ready_for_review", "closed"], "target_branches": ["main"] }
+  ],
+  "workers": [
+    { "name": "ikea-*", "operations": ["preview", "deploy"], "environments": ["dev", "test", "qa", "stage", "preprod", "prod"] }
+  ],
+  "status_checks": {
+    "summary": "cloudflare-ci",
+    "per_worker": true,
+    "skipped_counts_as_success": true
+  }
+}

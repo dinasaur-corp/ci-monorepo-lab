@@ -1,0 +1,13 @@
+{
+  "name": "ikea-site",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "env": {
+    "dev": { "name": "ikea-site-dev" },
+    "test": { "name": "ikea-site-test" },
+    "qa": { "name": "ikea-site-qa" },
+    "stage": { "name": "ikea-site-stage" },
+    "preprod": { "name": "ikea-site-preprod" },
+    "prod": { "name": "ikea-site-prod" }
+  }
+}

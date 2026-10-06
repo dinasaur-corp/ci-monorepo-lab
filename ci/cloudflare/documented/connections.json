@@ -1,0 +1,270 @@
+{
+  "connections": [
+    {
+      "name": "ikea-monorepo/assets-sync",
+      "repository": {
+        "provider": "github",
+        "name": "inter-ikea/ikea-com-monorepo"
+      },
+      "workflow_id": "workflow_worker_ci",
+      "subscriptions": [
+        {
+          "event": "push",
+          "branches": [
+            "main"
+          ]
+        },
+        {
+          "event": "pull_request",
+          "actions": [
+            "opened",
+            "reopened",
+            "synchronize",
+            "ready_for_review",
+            "closed"
+          ],
+          "target_branches": [
+            "main"
+          ]
+        }
+      ],
+      "workers": [
+        {
+          "name": "ikea-assets-sync",
+          "operations": [
+            "preview",
+            "deploy"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ikea-monorepo/coworker-channel",
+      "repository": {
+        "provider": "github",
+        "name": "inter-ikea/ikea-com-monorepo"
+      },
+      "workflow_id": "workflow_worker_ci",
+      "subscriptions": [
+        {
+          "event": "push",
+          "branches": [
+            "main"
+          ]
+        },
+        {
+          "event": "pull_request",
+          "actions": [
+            "opened",
+            "reopened",
+            "synchronize",
+            "ready_for_review",
+            "closed"
+          ],
+          "target_branches": [
+            "main"
+          ]
+        }
+      ],
+      "workers": [
+        {
+          "name": "ikea-coworker-channel",
+          "operations": [
+            "preview",
+            "deploy"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ikea-monorepo/image-manager",
+      "repository": {
+        "provider": "github",
+        "name": "inter-ikea/ikea-com-monorepo"
+      },
+      "workflow_id": "workflow_worker_ci",
+      "subscriptions": [
+        {
+          "event": "push",
+          "branches": [
+            "main"
+          ]
+        },
+        {
+          "event": "pull_request",
+          "actions": [
+            "opened",
+            "reopened",
+            "synchronize",
+            "ready_for_review",
+            "closed"
+          ],
+          "target_branches": [
+            "main"
+          ]
+        }
+      ],
+      "workers": [
+        {
+          "name": "ikea-image-manager",
+          "operations": [
+            "preview",
+            "deploy"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ikea-monorepo/redirects",
+      "repository": {
+        "provider": "github",
+        "name": "inter-ikea/ikea-com-monorepo"
+      },
+      "workflow_id": "workflow_worker_ci",
+      "subscriptions": [
+        {
+          "event": "push",
+          "branches": [
+            "main"
+          ]
+        },
+        {
+          "event": "pull_request",
+          "actions": [
+            "opened",
+            "reopened",
+            "synchronize",
+            "ready_for_review",
+            "closed"
+          ],
+          "target_branches": [
+            "main"
+          ]
+        }
+      ],
+      "workers": [
+        {
+          "name": "ikea-redirects",
+          "operations": [
+            "preview",
+            "deploy"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ikea-monorepo/router",
+      "repository": {
+        "provider": "github",
+        "name": "inter-ikea/ikea-com-monorepo"
+      },
+      "workflow_id": "workflow_worker_ci",
+      "subscriptions": [
+        {
+          "event": "push",
+          "branches": [
+            "main"
+          ]
+        },
+        {
+          "event": "pull_request",
+          "actions": [
+            "opened",
+            "reopened",
+            "synchronize",
+            "ready_for_review",
+            "closed"
+          ],
+          "target_branches": [
+            "main"
+          ]
+        }
+      ],
+      "workers": [
+        {
+          "name": "ikea-router",
+          "operations": [
+            "preview",
+            "deploy"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ikea-monorepo/site",
+      "repository": {
+        "provider": "github",
+        "name": "inter-ikea/ikea-com-monorepo"
+      },
+      "workflow_id": "workflow_worker_ci",
+      "subscriptions": [
+        {
+          "event": "push",
+          "branches": [
+            "main"
+          ]
+        },
+        {
+          "event": "pull_request",
+          "actions": [
+            "opened",
+            "reopened",
+            "synchronize",
+            "ready_for_review",
+            "closed"
+          ],
+          "target_branches": [
+            "main"
+          ]
+        }
+      ],
+      "workers": [
+        {
+          "name": "ikea-site",
+          "operations": [
+            "preview",
+            "deploy"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ikea-monorepo/streams",
+      "repository": {
+        "provider": "github",
+        "name": "inter-ikea/ikea-com-monorepo"
+      },
+      "workflow_id": "workflow_worker_ci",
+      "subscriptions": [
+        {
+          "event": "push",
+          "branches": [
+            "main"
+          ]
+        },
+        {
+          "event": "pull_request",
+          "actions": [
+            "opened",
+            "reopened",
+            "synchronize",
+            "ready_for_review",
+            "closed"
+          ],
+          "target_branches": [
+            "main"
+          ]
+        }
+      ],
+      "workers": [
+        {
+          "name": "ikea-streams",
+          "operations": [
+            "preview",
+            "deploy"
+          ]
+        }
+      ]
+    }
+  ]
+}

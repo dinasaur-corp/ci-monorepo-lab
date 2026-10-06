@@ -1,0 +1,13 @@
+name: "worker / coworker-channel / preview cleanup"
+
+on:
+  pull_request:
+    types: [closed]
+    paths:
+      - "workers/coworker-channel/**"
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Delete preview alias coworker-channel-pr-${{ github.event.pull_request.number }}"

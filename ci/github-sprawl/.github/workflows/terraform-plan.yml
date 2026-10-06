@@ -1,0 +1,17 @@
+name: "infra / terraform / plan"
+
+on:
+  pull_request:
+    paths:
+      - "infra/terraform/**"
+
+jobs:
+  plan:
+    runs-on: [self-hosted, azure-vnet, large]
+    strategy:
+      matrix:
+        environment: [dev, test, qa, stage, preprod, prod]
+    steps:
+      - uses: actions/checkout@v4
+      - run: terraform -chdir=infra/terraform/cloudflare plan -var environment=${{ matrix.environment }}
+      - run: echo "Post plan summary as PR comment"

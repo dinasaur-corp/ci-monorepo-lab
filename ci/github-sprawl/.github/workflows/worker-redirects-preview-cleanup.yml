@@ -1,0 +1,13 @@
+name: "worker / redirects / preview cleanup"
+
+on:
+  pull_request:
+    types: [closed]
+    paths:
+      - "workers/redirects/**"
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Delete preview alias redirects-pr-${{ github.event.pull_request.number }}"

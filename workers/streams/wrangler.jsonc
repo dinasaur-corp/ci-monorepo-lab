@@ -1,0 +1,13 @@
+{
+  "name": "ikea-streams",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "env": {
+    "dev": { "name": "ikea-streams-dev" },
+    "test": { "name": "ikea-streams-test" },
+    "qa": { "name": "ikea-streams-qa" },
+    "stage": { "name": "ikea-streams-stage" },
+    "preprod": { "name": "ikea-streams-preprod" },
+    "prod": { "name": "ikea-streams-prod" }
+  }
+}

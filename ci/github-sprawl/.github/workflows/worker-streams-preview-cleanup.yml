@@ -1,0 +1,13 @@
+name: "worker / streams / preview cleanup"
+
+on:
+  pull_request:
+    types: [closed]
+    paths:
+      - "workers/streams/**"
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Delete preview alias streams-pr-${{ github.event.pull_request.number }}"

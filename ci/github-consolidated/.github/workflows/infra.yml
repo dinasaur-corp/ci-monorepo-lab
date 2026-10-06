@@ -1,0 +1,31 @@
+name: infra
+
+on:
+  pull_request:
+    paths: ["infra/terraform/**"]
+  push:
+    branches: [main]
+    paths: ["infra/terraform/**"]
+
+jobs:
+  plan:
+    if: github.event_name == 'pull_request'
+    runs-on: [self-hosted, azure-vnet, large]
+    strategy:
+      matrix:
+        environment: [dev, test, qa, stage, preprod, prod]
+    steps:
+      - uses: actions/checkout@v4
+      - run: terraform -chdir=infra/terraform/cloudflare plan -var environment=${{ matrix.environment }}
+
+  apply:
+    if: github.event_name == 'push'
+    runs-on: [self-hosted, azure-vnet, large]
+    strategy:
+      max-parallel: 1
+      matrix:
+        environment: [dev, test, qa, stage, preprod, prod]
+    environment: ${{ matrix.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: terraform -chdir=infra/terraform/cloudflare apply -auto-approve -var environment=${{ matrix.environment }}

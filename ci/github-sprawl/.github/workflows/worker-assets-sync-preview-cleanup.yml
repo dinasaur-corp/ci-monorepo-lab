@@ -1,0 +1,13 @@
+name: "worker / assets-sync / preview cleanup"
+
+on:
+  pull_request:
+    types: [closed]
+    paths:
+      - "workers/assets-sync/**"
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Delete preview alias assets-sync-pr-${{ github.event.pull_request.number }}"

@@ -1,0 +1,13 @@
+name: "smoke / dev"
+
+on:
+  workflow_run:
+    workflows: ["worker / assets-sync / deploy / dev", "worker / coworker-channel / deploy / dev", "worker / image-manager / deploy / dev", "worker / redirects / deploy / dev", "worker / router / deploy / dev", "worker / site / deploy / dev", "worker / streams / deploy / dev"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl --fail https://dev.ikea.example/en/

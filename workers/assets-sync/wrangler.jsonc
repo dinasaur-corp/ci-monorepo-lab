@@ -1,0 +1,13 @@
+{
+  "name": "ikea-assets-sync",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "env": {
+    "dev": { "name": "ikea-assets-sync-dev" },
+    "test": { "name": "ikea-assets-sync-test" },
+    "qa": { "name": "ikea-assets-sync-qa" },
+    "stage": { "name": "ikea-assets-sync-stage" },
+    "preprod": { "name": "ikea-assets-sync-preprod" },
+    "prod": { "name": "ikea-assets-sync-prod" }
+  }
+}

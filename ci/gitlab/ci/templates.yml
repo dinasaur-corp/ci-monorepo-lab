@@ -1,0 +1,24 @@
+default:
+  image: node:22
+  tags: [azure-vnet, large]
+  cache:
+    key:
+      files: [pnpm-lock.yaml]
+    paths: [.pnpm-store]
+  before_script:
+    - corepack enable
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+
+.verify-worker:
+  stage: verify
+  script:
+    - pnpm --filter "@lab/$WORKER" lint
+    - pnpm --filter "@lab/$WORKER" test
+    - pnpm --filter "@lab/$WORKER" exec wrangler deploy --dry-run --env test
+
+.deploy-worker:
+  script:
+    - pnpm --filter "@lab/$WORKER" build
+    - pnpm --filter "@lab/$WORKER" exec wrangler deploy --env "$CI_ENVIRONMENT_NAME"
+  resource_group: $WORKER-$CI_ENVIRONMENT_NAME

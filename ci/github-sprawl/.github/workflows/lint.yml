@@ -1,0 +1,12 @@
+name: "repo / lint"
+
+on:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: [self-hosted, azure-vnet, large]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm -r lint

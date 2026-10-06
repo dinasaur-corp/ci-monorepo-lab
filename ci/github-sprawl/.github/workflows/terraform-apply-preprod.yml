@@ -1,0 +1,12 @@
+name: "infra / terraform / apply / preprod"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apply:
+    runs-on: [self-hosted, azure-vnet, large]
+    environment: preprod
+    steps:
+      - uses: actions/checkout@v4
+      - run: terraform -chdir=infra/terraform/cloudflare apply -auto-approve -var environment=preprod

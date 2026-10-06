@@ -1,0 +1,11 @@
+name: "maintenance / prune actions cache"
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    steps:
+      - run: gh cache list --limit 100 --sort last_accessed_at --order asc

@@ -1,0 +1,13 @@
+name: "smoke / stage"
+
+on:
+  workflow_run:
+    workflows: ["worker / assets-sync / deploy / stage", "worker / coworker-channel / deploy / stage", "worker / image-manager / deploy / stage", "worker / redirects / deploy / stage", "worker / router / deploy / stage", "worker / site / deploy / stage", "worker / streams / deploy / stage"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl --fail https://stage.ikea.example/en/

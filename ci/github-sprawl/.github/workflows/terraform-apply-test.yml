@@ -1,0 +1,16 @@
+name: "infra / terraform / apply / test"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "infra/terraform/**"
+  workflow_dispatch:
+
+jobs:
+  apply:
+    runs-on: [self-hosted, azure-vnet, large]
+    environment: test
+    steps:
+      - uses: actions/checkout@v4
+      - run: terraform -chdir=infra/terraform/cloudflare apply -auto-approve -var environment=test

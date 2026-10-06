@@ -1,0 +1,80 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .: {}
+
+  packages/config: {}
+
+  packages/image-core:
+    dependencies:
+      '@lab/shared':
+        specifier: workspace:*
+        version: link:../shared
+
+  packages/shared:
+    dependencies:
+      '@lab/config':
+        specifier: workspace:*
+        version: link:../config
+
+  packages/ui:
+    dependencies:
+      '@lab/config':
+        specifier: workspace:*
+        version: link:../config
+
+  workers/assets-sync:
+    dependencies:
+      '@lab/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+
+  workers/coworker-channel:
+    dependencies:
+      '@lab/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@lab/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+
+  workers/image-manager:
+    dependencies:
+      '@lab/image-core':
+        specifier: workspace:*
+        version: link:../../packages/image-core
+
+  workers/redirects:
+    dependencies:
+      '@lab/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+
+  workers/router:
+    dependencies:
+      '@lab/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@lab/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+
+  workers/site:
+    dependencies:
+      '@lab/image-core':
+        specifier: workspace:*
+        version: link:../../packages/image-core
+      '@lab/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+
+  workers/streams:
+    dependencies:
+      '@lab/config':
+        specifier: workspace:*
+        version: link:../../packages/config

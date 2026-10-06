@@ -1,0 +1,12 @@
+name: "infra / terraform / apply / qa"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apply:
+    runs-on: [self-hosted, azure-vnet, large]
+    environment: qa
+    steps:
+      - uses: actions/checkout@v4
+      - run: terraform -chdir=infra/terraform/cloudflare apply -auto-approve -var environment=qa

@@ -1,0 +1,12 @@
+terraform:
+  stage: verify
+  image: hashicorp/terraform:1.9
+  before_script: []
+  parallel:
+    matrix:
+      - ENVIRONMENT: [dev, test, qa, stage, preprod, prod]
+  script:
+    - terraform -chdir=infra/terraform/cloudflare plan -var environment=$ENVIRONMENT
+  rules:
+    - changes:
+        paths: ["infra/terraform/**"]

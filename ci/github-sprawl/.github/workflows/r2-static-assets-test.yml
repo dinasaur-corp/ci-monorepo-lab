@@ -1,0 +1,16 @@
+name: "assets / r2 / test"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "workers/assets-sync/public/**"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    environment: test
+    steps:
+      - uses: actions/checkout@v4
+      - run: pnpm dlx wrangler r2 object put ikea-static-test/favicon.ico --file workers/assets-sync/public/favicon.ico
